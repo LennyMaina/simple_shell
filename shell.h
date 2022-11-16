@@ -1,104 +1,46 @@
-#ifndef SHELL_H
-
-#define SHELL_H
-
-#define _GNU_SOURCE
-
-
+#ifndef SHELL
+#define SHELL
 
 #include <stdio.h>
-
-#include <string.h>
-
-#include <unistd.h>
-
-#include <sys/types.h>
-
-#include <sys/wait.h>
-
-#include <sys/stat.h>
-
-#include <signal.h>
-
 #include <stdlib.h>
-
-
-
-/* MACROS */
-
-#define M_GC garbage_collector_t *GC
-
-#define VOID_ARC int arc __attribute__((unused))
-
-#define VOID_ARV char **arv __attribute__((unused))
-
+#include <unistd.h>
+#include <string.h>
+#include <dirent.h>
+#include <stddef.h>
+#include <errno.h>
+#include <sys/types.h>
+#include <sys/wait.h>
+#define TOKENS_BUFFER_SIZE 64
+#define LINE_SIZE 1024
+#define TOKEN_DELIMITERS " \t\r\n\a"
+extern char **environ;
 /**
- * struct dir_t - structure for the directories
- * @directory: directory to get
- * @next: var to change of node
- **/
-typedef struct dir_t
-{
-	char *directory;
-	struct dir_t *next;
-} dir_t;
-/**
- * struct _garbage - struct
- * @subscriptions: subscripto
- * @subscriptions_free: subscriptions frees
- * @malloc: malloc
- * @free_all: free
- * @malloc_acumulator: acumulator
- * @free_acumulator: free acomulator
+ * struct builtins - Has builtins and associated funcs
+ * @arg: Builtins name
+ * @builtin: Mathcing builtin func
  */
-typedef struct _garbage
+typedef struct builtins
 {
-	void **subscriptions;
-	void **subscriptions_free;
-	unsigned int malloc_acumulator;
-	long int free_acumulator;
-	void *(*malloc)(struct _garbage *GC, size_t size);
-	void (*free_all)(struct _garbage *GC);
-} garbage_collector_t;
-garbage_collector_t *create_garbage_collector(void);
-void free_garbage_collector(M_GC);
-
-/*IMPORTANT FUNCTIONS*/
-/* dir_list - make a liked list with the directories*/
-dir_t *dir_list(M_GC, char *path);
-/* register_token - looks for the existence of a command*/
-char *register_token(M_GC, char *argument, dir_t *head, size_t count);
-/* find_command - find if the pateh exists*/
-char *find_command(M_GC, dir_t *nodo, char *command);
-/* _split - function to cut into pieces the line that sent us */
-/* and organize them as pointers to each string of the line */
-char **_split(M_GC, char *line);
-/* exec - creates a child process and executes the file mentioned */
-int exec(M_GC, char *cmd_argumment[], char **env, char *line);
-/* get_error -  Function that prints errors */
-void get_error(size_t count, char *line_argument);
-
-/*WEAPONS*/
-/* add_nodeint_end - adds a new node at the end of a dir_t list*/
-dir_t *add_nodeint_end(M_GC, dir_t **head, char *directory);
-/* str_concat - concatenates two strings*/
-char *str_concat(M_GC, char *s1, char *s2);
-/* copy_path_from_env - This function copies the content of PATH to the env*/
-void copy_path_from_env(char **env, char *path);
-/* handle_sigint - Function to handle Ctrl + C */
-void handle_sigint(int sig);
-/* _putchar2 -Function to print a character on standard output*/
-int _putchar2(char character);
-
-/*WEAPONS 2*/
-/* compare_str - compare two strings*/
-int compare_str(char *str1, char *str2);
-/* _putchar -Function to print a character on standard error*/
-int _putchar(char character);
-/* strlen - function to count the length of a string */
-int _strlen(char *str);
-/* print_number - function that prints numbers only */
-void print_number(size_t counter);
-/*print_env - function to print env*/
-int print_env(char **env);
+	char *arg;
+	void (*builtin)(char **args, char *line, char **env);
+} builtins_t;
+void shell(int ac, char **av, char **env);
+char *_getline(void);
+char **split_line(char *line);
+int execute_prog(char **args, char *line, char **env, int flow);
+int check_for_builtins(char **args, char *line, char **env);
+int launch_prog(char **args);
+void exit_shell(char **args, char *line, char **env);
+void env_shell(char **args, char *line, char **env);
+int _strcmp(char *s1, char *s2);
+char *find_path(char *args, char *tmp, char *er);
+char *search_cwd(char *filename, char *er);
+int bridge(char *check, char **args);
+void prompt(void);
+int builtins_checker(char **args);
+char *save_path(char *tmp, char *path);
+char *read_dir(char *er, struct dirent *s, char *fi, int l, char *p, char *t);
+char *_getenv(char *env);
+char *_strstr(char *haystack, char *needle);
+int _strlen(char *s);
 #endif
