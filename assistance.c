@@ -1,112 +1,74 @@
 #include "shell.h"
-/**
- * find_path - finds path
- * @filename: file name
- * @tmp: saves the PATH string
- * @er: an error message
- * Return: Success - path/filename, failure - er
- */
-
-char *find_path(char *filename, char *tmp, char *er)
-{
-	DIR *dir;
-	struct dirent *sd;
-	char *file_path, *path, *ret;
-	int len = 0;
-
-	while (filename[len])
-		len++;
-	path = _getenv("PATH");
-	tmp = save_path(tmp, path);
-	file_path = strtok(tmp, ":");
-	while (file_path)
-	{
-		dir = opendir(file_path);
-		if (!dir)
-		{
-			printf("Error! Unable to open directory.\n");
-			exit(0);
-		}
-		while ((sd = readdir(dir)))
-		{
-			ret = read_dir(er, sd, filename, len, file_path, tmp);
-			if (ret != er)
-			{
-				closedir(dir);
-				if (!(access(ret, X_OK)))
-					return (ret);
-			}
-		}
-		closedir(dir);
-		file_path = strtok(NULL, ":");
-	}
-	path = NULL;
-	free(tmp);
-	return (er);
-}
 
 /**
- *read_dir - opens and reads directory file names in search of fil
- *@er: error message
- *@s: struct containing info about a files in a directory
- *@fil: name of file being searched for
- *@fp: directory being searched through
- *@t: string containing the PATH variable's value
- *@l: length of filename
- *Return: success - path of fil/fil, else er
- */
-char *read_dir(char *er, struct dirent *s, char *fil, int l, char *fp, char *t)
-{
-	int i = 0;
-	char *ret;
-
-	for (i = 0; s->d_name[i] && fil[i]; i++)
-	{
-		if (s->d_name[i] != fil[i])
-			break;
-		if (i == (l - 1) && !(s->d_name[i + 1]))
-		{
-			ret = strcat(fp, "/");
-			ret = strcat(ret, fil);
-			free(t);
-			return (ret);
-		}
-	}
-	return (er);
-}
-/**
- *save_path - saves a copy of the PATH string
- *@tmp: copy to be made of PATH
- *@path: string containing original PATH value
+ * interactive - returns true if shell is interactive mode
+ * @info: struct address
  *
- *Return: success - tmp first time, path every other time, else error
+ * Return: 1 if interactive mode, 0 otherwise
  */
-char *save_path(char *tmp, char *path)
+int interactive(info_t *info)
 {
-	int i = 0;
+	return (isatty(STDIN_FILENO) && info->readfd <= 2);
+}
 
-	if (!tmp)
-	{
-		tmp = malloc(sizeof(char) * 100);
-		while (path[i])
-		{
-			tmp[i] = path[i];
-			i++;
-			tmp[i] = '\0';
-		}
-		i = 0;
-		return (tmp);
-	}
+/**
+ * is_delim - checks if character is a delimeter
+ * @c: the char to check
+ * @delim: the delimeter string
+ * Return: 1 if true, 0 if false
+ */
+int is_delim(char c, char *delim)
+{
+	while (*delim)
+		if (*delim++ == c)
+			return (1);
+	return (0);
+}
+
+/**
+ *_isalpha - checks for alphabetic character
+ *@c: The character to input
+ *Return: 1 if c is alphabetic, 0 otherwise
+ */
+
+int _isalpha(int c)
+{
+	if ((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z'))
+		return (1);
 	else
+		return (0);
+}
+
+/**
+ *_atoi - converts a string to an integer
+ *@s: the string to be converted
+ *Return: 0 if no numbers in string, converted number otherwise
+ */
+
+int _atoi(char *s)
+{
+	int i, sign = 1, flag = 0, output;
+	unsigned int result = 0;
+
+	for (i = 0;  s[i] != '\0' && flag != 2; i++)
 	{
-		while (tmp[i])
+		if (s[i] == '-')
+			sign *= -1;
+
+		if (s[i] >= '0' && s[i] <= '9')
 		{
-			path[i] = tmp[i];
-			i++;
-			path[i] = '\0';
+			flag = 1;
+			result *= 10;
+			result += (s[i] - '0');
 		}
-		i = 0;
-		return (path);
+		else if (flag == 1)
+			flag = 2;
 	}
-	return ("error");
+
+	if (sign == -1)
+		output = -result;
+	else
+		output = result;
+
+	return (output);
 }
